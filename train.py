@@ -11,6 +11,7 @@ from torchvision.models import resnet50
 from data.dataset import hand_dataset
 from torch.autograd import Variable
 import pytorch_warmup as warmup
+import numpy as np
 
 from vgg import vgg
 import shutil
@@ -47,6 +48,10 @@ parser.add_argument('--warmup', action='store_true', default=False,
                     help='enable warmup learning rate')
 parser.add_argument('--warmup-epochs', type=int, default=5,
                     help='warmup epochs')
+parser.add_argument('--mixup', action='store_true', default=False,
+                    help='enable mixup')
+parser.add_argument('--alpha', type=float, default=1.0,
+                    help='mixup alpha')
 parser.add_argument('--seed', type=int, default=1, metavar='S',
                     help='random seed (default: 1)')
 parser.add_argument('--log-interval', type=int, default=100, metavar='N',
@@ -113,15 +118,41 @@ def updateBN():
         if isinstance(m, nn.BatchNorm2d):
             m.weight.grad.data.add_(args.s*torch.sign(m.weight.data))  # L1
 
+def mixup_data(x, y, alpha=1.0, use_cuda=True):
+    '''Returns mixed inputs, pairs of targets, and lambda'''
+    if alpha > 0:
+        lam = np.random.beta(alpha, alpha)
+    else:
+        lam = 1
+
+    batch_size = x.size()[0]
+    if use_cuda:
+        index = torch.randperm(batch_size).cuda()
+    else:
+        index = torch.randperm(batch_size)
+
+    mixed_x = lam * x + (1 - lam) * x[index, :]
+    y_a, y_b = y, y[index]
+    return mixed_x, y_a, y_b, lam
+
+
+def mixup_criterion(criterion, pred, y_a, y_b, lam):
+    return lam * criterion(pred, y_a) + (1 - lam) * criterion(pred, y_b)
 
 def train(epoch, lr_sched, warmup_sched):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
         # data, target = Variable(data), Variable(target)
-        data, target = data.to(device), target.to(device)
+        inputs, targets = data.to(device), target.to(device)
+        if args.mixup:
+            inputs, targets_a, targets_b, lam = mixup_data(inputs, targets, args.alpha, args.cuda)
+            inputs, targets_a, targets_b = map(Variable, (inputs, targets_a, targets_b))
         optimizer.zero_grad()
-        output = model(data)
-        loss = F.cross_entropy(output, target)
+        outputs = model(inputs)
+        if args.mixup:
+            loss = mixup_criterion(F.cross_entropy, outputs, targets_a, targets_b, lam)
+        else:
+            loss = F.cross_entropy(outputs, targets)
         loss.backward()
         if args.sr:
             updateBN()

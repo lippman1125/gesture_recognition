@@ -3,6 +3,7 @@ import sys
 import torch
 import torch.utils.data as data
 import cv2
+import tqdm
 from PIL import Image
 import numpy as np
 
@@ -19,7 +20,7 @@ class hand_dataset(data.Dataset):
             (eg: take in caption string, return tensor of word indices)
     """
 
-    def __init__(self, root, anno, transform=None):
+    def __init__(self, root, anno, transform=None, preload = True):
         self.root = root
         self.anno = anno
         self.transform = transform
@@ -27,14 +28,29 @@ class hand_dataset(data.Dataset):
         with open(os.path.join(root, anno), 'r') as f:
           self.ids = [tuple(line.strip('\n').split()) for line in f]
 
+        self.preload = preload
+        self.preload_data = []
+        if preload:
+            for i in tqdm.tqdm(range(len(self.ids))):
+                img_id = self.ids[i]
+                path, label = img_id
+                img = cv2.imread(os.path.join(self.root, path), cv2.IMREAD_COLOR)
+                img = cv2.resize(img, (64, 64))
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                self.preload_data.append((img, label))
+            print("{} Data load completed".format(anno))
+
     def __getitem__(self, index):
-        img_id = self.ids[index]
-        path, label = img_id
-        img = cv2.imread(os.path.join(self.root, path), cv2.IMREAD_COLOR)
-        img = cv2.resize(img, (64,64))
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        # img = Image.open(os.path.join(self.root, path))
-        # img_resized = img.resize((32, 32))
+        if self.preload:
+            img, label = self.preload_data[index]
+        else:
+            img_id = self.ids[index]
+            path, label = img_id
+            img = cv2.imread(os.path.join(self.root, path), cv2.IMREAD_COLOR)
+            img = cv2.resize(img, (64,64))
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            # img = Image.open(os.path.join(self.root, path))
+            # img_resized = img.resize((32, 32))
 
         if self.transform is not None:
             img = self.transform(Image.fromarray(img))
