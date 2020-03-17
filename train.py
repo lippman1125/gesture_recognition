@@ -88,11 +88,11 @@ test_loader = torch.utils.data.DataLoader(
 cfg = [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'M', 512, 512, 512, 512, 'M', 512, 512, 512, 512]
 if args.refine:
     checkpoint = torch.load(args.refine)
-    model = vgg(cfg=checkpoint['cfg'])
-    model.load_state_dict(checkpoint['state_dict'])
     cfg = checkpoint['cfg']
+    model = vgg(dataset="handdata", cfg=cfg)
+    model.load_state_dict(checkpoint['state_dict'])
 else:
-    model = vgg(dataset="handdata")
+    model = vgg(dataset="handdata", cfg=cfg)
     # model = resnet50(num_classes = 5)
 
 model.to(device)
