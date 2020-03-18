@@ -66,22 +66,23 @@ device = torch.device("cuda" if args.cuda else "cpu")
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 train_loader = torch.utils.data.DataLoader(
     hand_dataset('./data', 'train.txt',
-                   transform=transforms.Compose([
-                       transforms.Pad(8),
-                       transforms.RandomResizedCrop((64,64),scale=(0.5,1.0), ratio=(0.8,1.2)),
-                       # transforms.Resize((32,32)),
-                       transforms.ColorJitter(brightness=(0.8,1.2), contrast=(0.8,1.2), saturation=(0.8,1.2)),
-                       transforms.RandomRotation(degrees=10),
-                       transforms.RandomHorizontalFlip(),
-                       transforms.ToTensor(),
-                       transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-                   ])),
+                transform=transforms.Compose([
+                    transforms.Pad(8),
+                    transforms.RandomResizedCrop((64,64),scale=(0.5,1.0), ratio=(0.8,1.2)),
+                    # transforms.Resize((32,32)),
+                    transforms.ColorJitter(brightness=(0.8,1.2), contrast=(0.8,1.2), saturation=(0.8,1.2)),
+                    transforms.RandomRotation(degrees=10),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.ToTensor(),
+                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+                ])),
     batch_size=args.batch_size, shuffle=True, **kwargs)
 test_loader = torch.utils.data.DataLoader(
-    hand_dataset('./data', 'test.txt', transform=transforms.Compose([
-                       transforms.ToTensor(),
-                       transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-                   ])),
+    hand_dataset('./data', 'test.txt',
+                transform=transforms.Compose([
+                    transforms.ToTensor(),
+                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+                ])),
     batch_size=args.test_batch_size, shuffle=True, **kwargs)
 
 # default vgg config

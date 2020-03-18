@@ -59,6 +59,27 @@ class hand_dataset(data.Dataset):
 
         return img, label
 
+    def get_mean_std(self):
+        r_mean, g_mean, b_mean = 0.0, 0.0, 0.0
+        r_std, g_std, b_std = 0.0, 0.0, 0.0
+        num = len(self.preload_data)
+        if self.preload:
+            for i in range(num):
+                # print(np.shape(self.preload_data[i][0]))
+                r_mean += np.mean(self.preload_data[i][0][:,:,0])/255.0
+                g_mean += np.mean(self.preload_data[i][0][:,:,1])/255.0
+                b_mean += np.mean(self.preload_data[i][0][:,:,2])/255.0
+                r_std += np.std(self.preload_data[i][0][:,:,0])/255.0
+                g_std += np.std(self.preload_data[i][0][:,:,1])/255.0
+                b_std += np.std(self.preload_data[i][0][:,:,2])/255.0
+
+            r_mean, g_mean, b_mean = round(r_mean/num, 3), round(g_mean/num, 3), round(b_mean/num, 3)
+            r_std, g_std, b_std = round(r_std/num, 3), round(g_std/num, 3), round(b_std/num, 3)
+            print("RGB Mean = {} {} {}".format(r_mean, g_mean, b_mean))
+            print("RGB Std = {} {} {}".format(r_std, g_std, b_std))
+
+
+
     def __len__(self):
         return len(self.ids)
 
