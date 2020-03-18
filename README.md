@@ -38,6 +38,10 @@ python3 test.py --model best_model_finetuned.pth.tar
 |pruned|20%|  
 |finetuned|93%|
 
+## Pretrained
+pretrained [weights](https://pan.baidu.com/s/1CLllHXPK1cckMhDm_CYbJA)   
+code: m73b
+
 ## Demo
 You can test it by using the code from https://github.com/lippman1125/YOLOv3-complete-pruning
 ```
